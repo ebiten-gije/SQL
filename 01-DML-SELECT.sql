@@ -108,3 +108,28 @@ select first_name || ' ' || last_name 이름, salary 급여 from employees where
 select first_name || ' ' || last_name 이름, salary 급여 from employees where first_name like '___a%';
 --  이름이 4글자인 사원들 중에서 두번째 글자가 a인 사원
 select first_name || ' ' || last_name 이름, salary 급여 from employees where first_name like '_a__';
+--  부서 id가 90이며 급여가 20000 이상인 사원
+select first_name || ' ' || last_name 이름, salary 급여, department_id "부서 id" from employees where department_id = 90 and salary >= 20000;
+--  입사일이 11/01/01 ~ 17/12/31 구간의 사원 목록
+select first_name || ' ' || last_name 이름, hire_date 입사일 from employees where hire_date between '11/01/01' and '15/12/31';
+--  manager_id가 100, 120, 147인 사원의 명단
+select first_name || ' ' || last_name 이름, manager_id from employees where manager_id = 100 or manager_id = 120 or manager_id = 147;
+select first_name || ' ' || last_name 이름, manager_id from employees where manager_id in (100, 120, 147);
+
+
+-----------------------
+--  order by
+-----------------------
+
+--  특정 컬럼명, 연산식, 별칭, 컬럼 순서를 기준으로 레코드 정렬
+--  asc (오름차순, default), desc (내림차순)
+--  여러 개의 컬럼에 적용할 수 있고 ','로 구분
+
+--  부서 번호의 오름차순으로 정렬, 부서번호, 급여, 이름 출력
+select department_id "부서 번호", salary 급여, first_name || ' ' || last_name 이름 from employees order by department_id asc;
+--  급여가 10000 이상인 직원 대상, 급여의 내림차순으로 출력,
+select first_name || ' ' || last_name 이름, salary 급여 from employees where salary >= 10000 order by salary desc;
+--  부서 번호, 급여, 이름 순으로 출력, 정렬 기준 부서번호 오름차순, 급여 내림차순
+select department_id "부서 번호", salary 급여, first_name || ' ' || last_name 이름 from employees order by department_id, salary desc;
+
+--  정렬 기준을 어떻게 세우느냐에 따라 성능, 출력 결과에 영향을 미칠 수 있다.

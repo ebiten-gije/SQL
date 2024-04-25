@@ -133,3 +133,170 @@ select first_name || ' ' || last_name 이름, salary 급여 from employees where
 select department_id "부서 번호", salary 급여, first_name || ' ' || last_name 이름 from employees order by department_id, salary desc;
 
 --  정렬 기준을 어떻게 세우느냐에 따라 성능, 출력 결과에 영향을 미칠 수 있다.
+
+
+-------------------
+--  단일행 함수  --
+-------------------
+
+--  단일 레코드를 기준으로 특정 컬럼의 값에 적용되는 함수
+--  문자열 단일행 함수
+select first_name, last_name,
+    concat(first_name, concat(' ', Last_name)) 이름,  --  문자열 연결 함수
+    first_name || ' ' || last_name 이름2,  --  문자열 연결 연산
+    initcap(first_name || ' ' || last_name)     --  각 단어의 첫 글자를 대문자로
+from employees;
+
+select first_name, last_name,
+    lower(First_name)소문자 ,     --  모두 소문자
+    upper(first_name)대문자,      --  모두 대문자]
+    lpad (first_name, 10, '*'),  --  왼쪽 빈자리 채움 
+    rpad (first_name, 10, '*')   --  오른쪽 빈자리 채음
+from employees;
+
+select '    Oracle      ',
+'***********Database**********',
+    ltrim('    Oracle      '),  --  왼쪽 빈공간 삭제
+    rtrim('    Oracle      '),  --  오른쪽 빈봉간 삭제
+    trim('*' from '***********Database**********'),  --  앞뒤 잡음 문자 제거
+    substr('Oracle database', 8, 4),     --  부분 문자열
+    substr('Oracle database', -8, 6),    --  역인덱스 이용 부분 문자열
+    length ('Oracle database')           --  문자열 길이
+from dual;
+
+--  수차형 단일행 함수
+
+select 3.141592,
+    abs(-3.141592),  --  절댓값
+    ceil(3.14),      --  올림
+    floor(3.14),     --  버림
+    round(3.5),      --  반올림
+    round(3.141592, 3),  --  소수점 셋째 자리까지
+    trunc (3.35),   --  버림
+    trunc (3.141592,3),  --  소수점 셋째까지 남김
+    sign (-3.141592),   --  부호 판단 (-1 음수, 0은 0, 1 양수)
+    mod (7, 3),      --  7을 3으로 나눈 나머지
+    power(2, 4)     --  2의 4제곱
+from dual;
+
+-------------------
+--  DATA FORMAT
+-------------------
+
+--  현재 세션 정보 확인
+select * from nls_session_parameters;
+--  현재 날짜 포맷이 어떻게 되는가
+select value from nls_session_parameters
+where parameter = 'NLS_DATE_FORMAT';
+
+--  현재 날짜: sysdate
+select sysdate from dual;   -- 가상 테이블 dual로부터 받아오므로 1개의 레코드
+select sysdate from employees;  --  employees 테이블에서 받아오므로 그 테이블 레코드 갯수만큼
+
+--  날짜 관련 단일행 함수
+select
+    sysdate,
+    ADD_MONTHs(sysdate, 2),   --  2개월 지난 후의 날짜
+    Last_day (sysdate), --  현재 달의 마지막날
+    months_between('12/09/24', sysdate), -- 두 날짜 사이의 개월 차
+    next_day(sysdate, 5),   --  1:일 ~ 7:토
+    round(sysdate, 'month'),    --  month를 기준으로 반올림
+    trunc(sysdate, 'MONTH')     --  month를 기준으로 버림
+from dual;
+
+select first_name, hire_date, round (MONTHS_BETWEEN (sysdate, hire_date)) 근속개월수
+from employees;
+
+
+------------------
+--  변환 함수
+--=---------------
+
+--  to_number(s, fmt): 문자열 -> 숫자
+--  to_date(s, fmt): 문자열 -> 날짜
+--  to_char(o, fmt): 숫자, 날짜 -> 문자열
+
+--  to_char
+select first_name, hire_date,
+    to_char(hire_date, 'YYYY-MM-DD')
+from employees;
+
+--  햔재 시간을 년월시분초로 표기
+select sysdate,
+    to_char(sysdate, 'YYYY-MM-DD HH24:MI:SS')
+from dual;
+
+select
+    to_char(1000000000, 'L999,999,999,999.99')
+from dual;
+
+--  모든 직원의 이름과 연봉 정보를 표시
+select first_name 이름, salary 급여, commission_pct 커미션,
+    to_char(((salary + salary * nvl(commission_pct, 0)) * 12), '$999,999,999.99') 연봉
+from employees;
+
+--  문자 -> 숫자 : to_number
+select '$57,600',
+    to_number('$57,600', '$99,999') / 12 월급
+from dual;
+
+--  문자열 -> 날짜
+select '2012-09-24 13:15:34',
+    to_date('2012-09-24 13:15:34', 'YYYY-MM-DD HH24:MI:SS')
+from dual;
+
+--  날짜 연산
+--  Date +/- number : 날짜에서 특정 날수를 더하거나 뺄 수 있다
+--  date - date : 두 날짜 사이의 차
+--  date + number / 24 : 특정 시간이 지난 후의 날짜
+select sysdate,
+    sysdate +1, sysdate -1,
+    (sysdate - To_date('19971126')) / 365,
+    sysdate + 48 / 24
+from dual;
+
+--  nvl function
+select first_name, salary,
+    nvl(salary * commission_pct, 0) 커미션 -- nvl(표현식, 대체값)
+from employees;
+
+--  nvl2 function
+select first_name, salary,
+    nvl2(commission_pct, salary * commission_pct, 0) 커미션 -- nvl2(표현식, null이 아닐때, null일때)
+from employees;
+
+--  case function
+--  보너스를 지급하기로 했을 때
+--  ad 관련 직종에게는 20%, sa 관련 직종이네느 10%, IT관련 8%, 나머지 5%
+select first_name, job_id, salary,
+    substr (job_id, 1, 2) "직종 체크",
+    case substr (job_id, 1, 2) when 'AD' then salary * 0.2
+                    when 'SA' then salary * 0.1
+                    when 'IT' then salary * 0.08
+                    else salary * 0.05
+    end 보너스
+from employees;
+
+--  decode 함수
+select first_name, job_id, salary,
+    substr(job_id, 1, 2) "직종 체크",
+    decode(substr(job_id, 1, 2),
+        'AD', salary * 0.2,
+        'SA', salary * 0.1,
+        'IT', salary * 0.08,
+        salary * 0.05) 보너스    
+from employees;
+
+select First_name from employees where salary = 12008;
+
+select first_name 이름, department_id 부서,
+    case 
+    when department_id <= 30 then 'A-GROUP'
+    when department_id <= 50 then 'B-GROUP'
+    when department_id <= 100 then 'C-GROUP'
+    else 'REMAINDER'
+    end 팀
+from employees    order by 팀, department_id;
+
+select first_name, replace (first_name, 'a', '*'), replace (first_name,
+substr(first_name, 2, 3), '***') from employees;

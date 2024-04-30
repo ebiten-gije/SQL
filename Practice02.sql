@@ -44,8 +44,13 @@ select job_title, max_salary - min_salary
 from jobs
 order by max_salary - min_salary desc ;
 
+select job_id, max(salary) - min(salary) diff
+from employees
+group by job_id
+order by diff desc;
+
 --  09
-select manager_id--, round(avg(salary),1) as 평균임금, min(salary), max(salary)
+select manager_id, round(avg(salary),1) as 평균임금, min(salary), max(salary)
 from employees
 where hire_date >= '15/01/01'
 group by manager_id
@@ -53,7 +58,7 @@ having avg(salary) >= 5000
 order by avg(salary) desc;
 
 --  10
-select first_name, hire_date, 
+select employee_id, salary, first_name, hire_date, 
 case 
 when hire_date < '12/12/31' then '창립맴버'
 when hire_date >= '13/01/01' and hire_date < '14/01/01' then '13년 입사'

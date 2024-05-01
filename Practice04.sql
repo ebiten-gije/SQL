@@ -12,6 +12,12 @@ where salary >= (select avg(salary) from employees)
 and salary <= (select max(salary) from employees)
 order by salary;
 
+select emp.employee_id, emp.first_name, emp.salary, t.avgSal, t.maxSal
+from employees emp
+join (select round(avg(salary), 1) avgSal, max(salary) maxSal from employees) t
+on emp.salary between t.avgSal and t.maxSal
+order by salary;
+
 --  03
 select location_id, street_address, postal_code, city, state_province, country_id
 from locations
@@ -61,5 +67,18 @@ where rn > 10 and rn <= 15;
 select rn, employee_id, first_name, salary, hire_date
 from
 (select row_number () over (order by hire_date asc) as rn, employee_id, first_name, salary, hire_date
-from (select * from employees))
+from employees)
 where rn > 10 and rn <= 15;
+
+SELECT rn, employee_id, first_name, salary, hire_date
+FROM
+    (SELECT employee_id, first_name, salary, hire_date,
+            ROW_NUMBER () OVER (ORDER BY hire_date) rn
+    FROM employees)
+WHERE rn >= 11 AND rn <= 15;
+
+SELECT rn, employee_id, first_name, salary, hire_date
+FROM (SELECT employee_id, first_name, salary, hire_date,
+        RANK () OVER (ORDER BY hire_date) rn
+        FROM employees) 
+WHERE rn BETWEEN 11 AND 15;

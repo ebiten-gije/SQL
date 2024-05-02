@@ -66,6 +66,19 @@ grant select on employees to himedia;
 select * from hr.employees; --   hr.employees 에 select 할 수 잇는 권한
 select * from hr.departments;   --  hr.departments 에 대한 권한은 없다
 
+--  현재 사용자에게 부여된 ROLE의 확인
+select * from USER_ROLE_PRIVS;
+
+--  connect와 resource 역할은 어떤 권한으로 구성되어있는거?
+--  cmd 에서 sysdba로 진행
+--  sqlplus sys/oracle as sysdba
+--  desc role_sys_privs;
+
+--  connect 롤에는 어떤 권한이 포함되어 있는가?
+--  select privilege from role_sys_privs where role='CONNECT';
+--  resource 롤에는 어떤 권한?
+--  select privilege from role_sys_privs where role='RESOURCE';
+
 -----------------------------
 --  DDL
 -----------------------------
@@ -102,3 +115,182 @@ select * from tabs;
 
 desc book;
 select * from book;
+
+--  author 테이블 생성
+create table author(
+    author_id number(10),
+    author_name varchar2(100) not null,
+    author_desc varchar2(500),
+    primary key (author_id)
+);
+
+desc author;
+
+--  book 테이블의 author 컬럼 삭제
+--  나중에 author_id 컬럼 추가 -> author.author_id와 참조 연결할 예정
+alter table book drop column author;
+desc book;
+
+--  book 테이블에 author_id 컬럼 추가
+--  author.author_id 를 참조하는 컬럼, author.author_id 와 같은 형태여야 함
+alter table book add (author_id number(10));
+desc book;
+
+--  book 테이블의 book_id도 author 테이블의 pk와 같은 데이터 타이븡(number 10)로 변경
+alter table book modify (book_id number (10));
+desc book;
+
+--  book 테이블의 book_id 컬럼에 primary key 제약조건을 부여
+alter table book 
+    add constraint pk_book_id primary key (book_id);
+desc book;
+
+--  book 테이블의 author_id 컬럼과 author 테이블의 author_id 를 fk로 연결
+alter table book
+    add constraint fk_author_id foreign key (author_id)
+        REFERENCES author(author_id);
+desc book;
+
+--  Dictionary
+
+--  User_ : 현재 로그인된 사용자에게 허용된 부
+--  ALL_ : 모든 사용자 뷰
+--  DBA_ : DBA에게 허용된 뷰
+
+--  모든 딕셔너리 확인
+select * from dictionary;
+
+--  사용자 스키마 객체: USER_OBJECTS
+select * from USER_OBJECTS;
+--  사용자 스키마의 이름과 타입 정보 출력
+select OBJECT_NAME, OBJECT_TYPE from USER_OBJECTS;
+
+--  제약 조건 확인
+select * from USER_CONSTRAINTS;
+select CONSTRAINT_NAME, CONSTRAINT_TYPE, SEARCH_CONDITION, TABLE_NAME
+from USER_CONSTRAINTS;
+
+--  book 테이블에 적용된 제약 조건의 확인
+select CONSTRAINT_NAME, CONSTRAINT_TYPE, SEARCH_CONDITION
+from USER_CONSTRAINTS
+where TABLE_NAME = 'BOOK';
+
+
+truncate table author;
+-----------------------------------
+--  INSERT : 테이릅렝 새 레코드 (튜플) 추가
+--  제공된 컬럼 목록의 순서와 타입, 값 목록의 순서와 타입이 추가되어야 함
+--  컬럼 목록을 제공하지 않으면 테이블 생성시 정의된 컬럼의 순서의 타입을 따른다
+
+--  컬럼 목록이 제시되지 않았을 때
+insert into author
+values (1, '나쓰메 소세키', '도련님 작가');
+
+--  컬럼 목록을 제시했을 때,
+--  제시한 컬럼의 순서와 타입대로 값 목록을 제공해야 함
+insert into author (author_id, author_name)
+values (2, '아쿠타가와 류노스케');
+
+--  컬럼 목록을 제공했을 때,
+--  테이블 생성 시 정의된 컬럼의 순서와 상관 없이 데이터 제공 가능
+insert into author(author_name, author_desc, author_id)
+values ('미시마 유키오', '금각사가 유명해', 3);
+
+select * from author;
+
+rollback;       --  반영 취소
+
+insert into author
+values (1, '나쓰메 소세키', '도련님 작가');
+insert into author (author_id, author_name)
+values (2, '아쿠타가와 류노스케');
+insert into author(author_name, author_desc, author_id)
+values ('미시마 유키오', '금각사가 유명해', 3);
+
+select * from author;
+
+commit;
+select * from author;
+
+--  UPDATE
+--  특정 레코드의 컬럼 값을 변경한다
+--  where 절이 없으면 모든 레코드가 변경
+--  가급적 where 절로 변경하고자 하는 러코드를 지정하도록 하자
+update author set author_desc = '나생문 작가';
+select * from author;
+rollback;
+select * from author;
+
+UPDATE author set author_desc = '나생문 작가'
+where author_name = '아쿠타가와 류노스케';
+
+select * from author;
+commit;
+
+
+--  DELETE
+--  테이블로부터 특정 레코드를 삭제
+--  where 젉이 없으면 모든 레코드를 삭제 (주의!!)
+
+--  연습
+--  hr.employees 테이블을 기반으로 department_id 10, 20, 30 인 직원들만 새 테이블 emp123으로 생성
+create table emp123 as 
+    (select * from hr.employees
+        where department_id in (10, 20, 30));
+        
+desc emp123;
+select first_name, salary, department_id from emp123;
+
+--  부서가 30번인 직원들의 급여를 10퍼센트 인상해보자
+update emp123 set salary = salary * 1.1
+where department_id = 30;
+
+select * from emp123;
+
+--  job_id 가 MK_로 시작하는 직원들 삭제
+delete from emp123
+where job_id like 'MK_%';
+select * from emp123;
+
+delete from emp123;     --  where 절이 생략된 DELETE문은 모든 레코드를 삭제 -> 주의
+select * from emp123;
+
+rollback;
+
+------------------------
+-- transaction
+------------------------
+
+--  트렌젝션 테스트 테이블
+create table t_test (
+    log_text varchar2(100)
+);
+
+--  첫번째 DML이 수행된 시점에서 Transaction
+insert into t_test values ('트랜잭션 시작');
+select * from t_test;
+insert into t_test values ('데이터 INSERT');
+select * from t_test;
+
+savepoint sp1;  --  세이브 포인트 설정
+insert into t_test values ('데이터 2 INSERT');
+select * from t_test;
+
+savepoint sp2;  --  세이브 포인트 설정
+
+update t_test set log_text = '업데이트';
+select * from t_test;
+
+rollback to sp1;
+select * from t_test;
+
+insert into t_test values ('데이터 3 인서트');
+select * from t_test;
+
+--  반영은 commit or 취소는 rollback
+--  명시적으로 트랜젝션 종료 상황
+commit;
+select * from t_test;
+
+rollback;
+select * from t_test;

@@ -24,6 +24,20 @@ select max(salary), department_id from employees GROUP by department_id;
 --출력내용은 매니저 아이디, 매니저이름(first_name), 매니저별 평균급여, 매니저별 최소급여, 
 --매니저별 최대급여 입니다.
 --(9건)
+select res.emId, empt.first_name, res.avgSal, res.minSal, res.maxSal 
+from (
+    select emp.employee_id as emId, round (avg(sub.salary), 1) as avgSal,
+        max(sub.salary) maxSal, min(sub.salary) as minSal
+    from employees emp 
+    join (
+        select employee_id, salary, manager_id from employees where hire_date >= '15/01/01') sub
+    on emp.employee_id = sub.manager_id
+    group by emp.employee_id
+    having avg(sub.salary) >= 5000
+    order by avgSal desc
+    ) res
+join employees empt on res.emid = empt.employee_id;
+
 
 select man.manId, emp.first_name, man.avgSal, man.minSal, man.maxSal
 from employees emp 
@@ -136,14 +150,32 @@ join (
 ) avMan on avMan.avId = emp.manager_id
 order by man.hire_date;
 
-select emp.manager_id, tar.tarMi, round (avg(tar.tarSal), 1)
-from employees emp
-left outer join(
-    select first_name as tarFn, salary as tarSal, hire_date as tarHd, manager_id as tarMi
-    from employees
-    where hire_date >= '15/01/01'
-    order by hire_date
-) tar on tar.tarMi = emp.manager_id
-group by emp.manager_ID, tar.tarMi;
-
 select manager_id from employees group by manager_ID;
+
+select emp.employee_id as "manager", sub.employee_id as "employee", sub.salary as salary
+from employees emp  join
+(select employee_id, salary, manager_id from employees where hire_date >= '15/01/01') sub
+on emp.employee_id = sub.manager_id;
+
+select emp.employee_id as emId, round (avg(sub.salary), 1) as avgSal,
+        max(sub.salary) maxSal, min(sub.salary) as minSal
+    from employees emp 
+    join (
+        select employee_id, salary, manager_id from employees where hire_date >= '15/01/01') sub
+    on emp.employee_id = sub.manager_id
+    group by emp.employee_id
+    order by avgSal desc;
+
+select res.emId, empt.first_name, res.avgSal, res.maxSal, res.minSal
+from (
+    select emp.employee_id as emId, round (avg(sub.salary), 1) as avgSal,
+        max(sub.salary) maxSal, min(sub.salary) as minSal
+    from employees emp 
+    join (
+        select employee_id, salary, manager_id from employees where hire_date >= '15/01/01') sub
+    on emp.employee_id = sub.manager_id
+    group by emp.employee_id
+    order by avgSal desc
+    ) res
+join employees empt on res.emid = empt.employee_id
+where res.avgSal >= 5000;

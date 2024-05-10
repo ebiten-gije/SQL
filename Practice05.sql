@@ -37,7 +37,7 @@ from (
     order by avgSal desc
     ) res
 join employees empt on res.emid = empt.employee_id;
-
+select emp.first_name, emp.last_name, man.first_name from employees emp join employees man on emp.manager_id = man.employee_id order by emp.first_name;
 
 select man.manId, emp.first_name, man.avgSal, man.minSal, man.maxSal
 from employees emp 

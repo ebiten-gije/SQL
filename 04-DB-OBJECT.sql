@@ -158,3 +158,10 @@ create sequence seq_book_id
     increment by 1
     maxvalue 1000000
     NOCACHE;
+    
+desc author;
+delete author;
+select * from author;
+insert into author (author_id, author_name, author_desc)
+values (23, '나쓰메 소세키', '봇짱');
+commit;
